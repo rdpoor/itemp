@@ -34,7 +34,7 @@ degrees (Fahrenheit or Celsius).
       printf("Temperature is %d (100th's of a degree F)\n", f100); // "6818"
 
       c100 = itemp_to_celsius_100(itemp);     // convert to 100ths C
-      printf("Temperature is %d (100th's of a degree C)\n", c100); // "2100"
+      printf("Temperature is %d (100th's of a degree C)\n", c100); // "2010"
 
       // You can also work in tenths of a degree
       int16_t f10;     // temperature in 10ths of a degree F
