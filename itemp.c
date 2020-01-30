@@ -118,7 +118,7 @@ float itemp_to_celsius(itemp_t itemp) {
 // self test
 
 // To run tests on a unix-like system:
-//   cc -g -Wall -DUNIT_TEST -o itemp itemp.c && ./itemp && rm -f itemp
+//   cc -Wall -DUNIT_TEST -o itemp itemp.c && ./itemp && rm -f itemp
 
 #ifdef UNIT_TEST
 

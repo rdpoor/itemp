@@ -1,7 +1,7 @@
 # itemp
-compact representation of temperature
+Compact representation of temperature
 
-`itemp` represents temperature at a 16 bit integer and uses integer arithmetic
+`itemp` represents temperature as a 16 bit integer and uses integer arithmetic
 to convert between Fahrenheit and Celsius.  It provides accuracy down to 0.01
 degrees (Fahrenheit or Celsius).
 
