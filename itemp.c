@@ -39,6 +39,13 @@
 // =============================================================================
 // local (forward) declarations
 
+/**
+ * @brief Return x/y, rounded to the nearest integer, using integer-only maths.
+ *
+ * Works with positive or negative x or y (4 quadrant).
+ */
+static int16_t rquo(int32_t x, int32_t y);
+
 // =============================================================================
 // local storage
 
@@ -62,15 +69,15 @@ itemp_t fahrenheit_to_itemp(float fahrenheit) {
 }
 
 int16_t itemp_to_fahrenheit_1(itemp_t itemp) {
-  return itemp_to_fahrenheit_100(itemp) / 100;
+  return rquo(itemp_to_fahrenheit_100(itemp), 100);
 }
 
 int16_t itemp_to_fahrenheit_10(itemp_t itemp) {
-  return itemp_to_fahrenheit_100(itemp) / 10;
+  return rquo(itemp_to_fahrenheit_100(itemp), 10);
 }
 
 int16_t itemp_to_fahrenheit_100(itemp_t itemp) {
-  return (itemp / F_100_SLOPE) - F_100_OFFSET;
+  return rquo(itemp, F_100_SLOPE) - F_100_OFFSET;
 }
 
 float itemp_to_fahrenheit(itemp_t itemp) {
@@ -96,15 +103,15 @@ itemp_t celsius_to_itemp(float celsius) {
 }
 
 int16_t itemp_to_celsius_1(itemp_t itemp) {
-  return itemp_to_celsius_100(itemp) / 100;
+  return rquo(itemp_to_celsius_100(itemp), 100);
 }
 
 int16_t itemp_to_celsius_10(itemp_t itemp) {
-  return itemp_to_celsius_100(itemp) / 10;
+  return rquo(itemp_to_celsius_100(itemp), 10);
 }
 
 int16_t itemp_to_celsius_100(itemp_t itemp) {
-  return (itemp / C_100_SLOPE) - C_100_OFFSET;
+  return rquo(itemp, C_100_SLOPE) - C_100_OFFSET;
 }
 
 float itemp_to_celsius(itemp_t itemp) {
@@ -113,6 +120,14 @@ float itemp_to_celsius(itemp_t itemp) {
 
 // =============================================================================
 // local (static) code
+
+static int16_t rquo(int32_t x, int32_t y) {
+  if ((x ^ y) >= 0) {             // beware of operator precedence
+    return (x + y/2) / y;        // signs match, positive quotient
+  } else {
+    return (x - y/2) / y;        // signs differ, negative quotient
+  }
+}
 
 // =============================================================================
 // self test
@@ -164,7 +179,7 @@ void unit_test_float_eps(const float f0, const float f1, const float eps,
   if (diff < 0) diff = -diff;
   if (diff >= eps) {
     printf(
-        "\r\n%e and %e differ by more than %e in UTEST_FLOAT_EPS(%s, %s, %s) "
+        "\r\n%f and %f differ by more than %f in UTEST_FLOAT_EPS(%s, %s, %s) "
         "at %s:%d",
         f0, f1, eps, f0_expr, f1_expr, eps_expr, file, line);
     fflush(stdout);
@@ -377,7 +392,7 @@ int main() {
   ASSERT_INT(itemp_to_celsius_1(64260), 45);        // 45C
   ASSERT_EPS(itemp_to_celsius(64260), 45.0, 0.01);  // 110C
 
-  ASSERT_INT(itemp_to_celsius_100(65535), 4641);       // Max Lim 46.4167.55C
+  ASSERT_INT(itemp_to_celsius_100(65535), 4642);       // Max Lim 46.4167.55C
   ASSERT_EPS(itemp_to_celsius(65535), 46.4167, 0.01);  // Max Lim 46.4167C
 
   // ===========================================
@@ -456,6 +471,75 @@ int main() {
   itemp -= 10 * ITEMP_ONE_HUNDRETH_DEGREE_C;
   ASSERT_INT(itemp_to_fahrenheit_100(itemp), 6800);  // 68F
   ASSERT_INT(itemp_to_celsius_100(itemp), 2000);     // 20C
+
+  // ===========================================
+  // Conversion from itemp should round to nearest
+
+  ASSERT_EPS(itemp_to_fahrenheit(0) * 1.0, itemp_to_fahrenheit_1(0), 0.5);
+  ASSERT_EPS(itemp_to_fahrenheit(1) * 1.0, itemp_to_fahrenheit_1(1), 0.5);
+  ASSERT_EPS(itemp_to_fahrenheit(2) * 1.0, itemp_to_fahrenheit_1(2), 0.5);
+  ASSERT_EPS(itemp_to_fahrenheit(3) * 1.0, itemp_to_fahrenheit_1(3), 0.5);
+  ASSERT_EPS(itemp_to_fahrenheit(4) * 1.0, itemp_to_fahrenheit_1(4), 0.5);
+  ASSERT_EPS(itemp_to_fahrenheit(5) * 1.0, itemp_to_fahrenheit_1(5), 0.5);
+  ASSERT_EPS(itemp_to_fahrenheit(6) * 1.0, itemp_to_fahrenheit_1(6), 0.5);
+  ASSERT_EPS(itemp_to_fahrenheit(7) * 1.0, itemp_to_fahrenheit_1(7), 0.5);
+  ASSERT_EPS(itemp_to_fahrenheit(8) * 1.0, itemp_to_fahrenheit_1(8), 0.5);
+  ASSERT_EPS(itemp_to_fahrenheit(9) * 1.0, itemp_to_fahrenheit_1(9), 0.5);
+
+  ASSERT_EPS(itemp_to_fahrenheit(0) * 10.0, itemp_to_fahrenheit_10(0), 0.5);
+  ASSERT_EPS(itemp_to_fahrenheit(1) * 10.0, itemp_to_fahrenheit_10(1), 0.5);
+  ASSERT_EPS(itemp_to_fahrenheit(2) * 10.0, itemp_to_fahrenheit_10(2), 0.5);
+  ASSERT_EPS(itemp_to_fahrenheit(3) * 10.0, itemp_to_fahrenheit_10(3), 0.5);
+  ASSERT_EPS(itemp_to_fahrenheit(4) * 10.0, itemp_to_fahrenheit_10(4), 0.5);
+  ASSERT_EPS(itemp_to_fahrenheit(5) * 10.0, itemp_to_fahrenheit_10(5), 0.5);
+  ASSERT_EPS(itemp_to_fahrenheit(6) * 10.0, itemp_to_fahrenheit_10(6), 0.5);
+  ASSERT_EPS(itemp_to_fahrenheit(7) * 10.0, itemp_to_fahrenheit_10(7), 0.5);
+  ASSERT_EPS(itemp_to_fahrenheit(8) * 10.0, itemp_to_fahrenheit_10(8), 0.5);
+  ASSERT_EPS(itemp_to_fahrenheit(9) * 10.0, itemp_to_fahrenheit_10(9), 0.5);
+
+  ASSERT_EPS(itemp_to_fahrenheit(0) * 100.0, itemp_to_fahrenheit_100(0), 0.5);
+  ASSERT_EPS(itemp_to_fahrenheit(1) * 100.0, itemp_to_fahrenheit_100(1), 0.5);
+  ASSERT_EPS(itemp_to_fahrenheit(2) * 100.0, itemp_to_fahrenheit_100(2), 0.5);
+  ASSERT_EPS(itemp_to_fahrenheit(3) * 100.0, itemp_to_fahrenheit_100(3), 0.5);
+  ASSERT_EPS(itemp_to_fahrenheit(4) * 100.0, itemp_to_fahrenheit_100(4), 0.5);
+  ASSERT_EPS(itemp_to_fahrenheit(5) * 100.0, itemp_to_fahrenheit_100(5), 0.5);
+  ASSERT_EPS(itemp_to_fahrenheit(6) * 100.0, itemp_to_fahrenheit_100(6), 0.5);
+  ASSERT_EPS(itemp_to_fahrenheit(7) * 100.0, itemp_to_fahrenheit_100(7), 0.5);
+  ASSERT_EPS(itemp_to_fahrenheit(8) * 100.0, itemp_to_fahrenheit_100(8), 0.5);
+  ASSERT_EPS(itemp_to_fahrenheit(9) * 100.0, itemp_to_fahrenheit_100(9), 0.5);
+
+  ASSERT_EPS(itemp_to_celsius(0) * 1.0, itemp_to_celsius_1(0), 0.5);
+  ASSERT_EPS(itemp_to_celsius(1) * 1.0, itemp_to_celsius_1(1), 0.5);
+  ASSERT_EPS(itemp_to_celsius(2) * 1.0, itemp_to_celsius_1(2), 0.5);
+  ASSERT_EPS(itemp_to_celsius(3) * 1.0, itemp_to_celsius_1(3), 0.5);
+  ASSERT_EPS(itemp_to_celsius(4) * 1.0, itemp_to_celsius_1(4), 0.5);
+  ASSERT_EPS(itemp_to_celsius(5) * 1.0, itemp_to_celsius_1(5), 0.5);
+  ASSERT_EPS(itemp_to_celsius(6) * 1.0, itemp_to_celsius_1(6), 0.5);
+  ASSERT_EPS(itemp_to_celsius(7) * 1.0, itemp_to_celsius_1(7), 0.5);
+  ASSERT_EPS(itemp_to_celsius(8) * 1.0, itemp_to_celsius_1(8), 0.5);
+  ASSERT_EPS(itemp_to_celsius(9) * 1.0, itemp_to_celsius_1(9), 0.5);
+
+  ASSERT_EPS(itemp_to_celsius(0) * 10.0, itemp_to_celsius_10(0), 0.5);
+  ASSERT_EPS(itemp_to_celsius(1) * 10.0, itemp_to_celsius_10(1), 0.5);
+  ASSERT_EPS(itemp_to_celsius(2) * 10.0, itemp_to_celsius_10(2), 0.5);
+  ASSERT_EPS(itemp_to_celsius(3) * 10.0, itemp_to_celsius_10(3), 0.5);
+  ASSERT_EPS(itemp_to_celsius(4) * 10.0, itemp_to_celsius_10(4), 0.5);
+  ASSERT_EPS(itemp_to_celsius(5) * 10.0, itemp_to_celsius_10(5), 0.5);
+  ASSERT_EPS(itemp_to_celsius(6) * 10.0, itemp_to_celsius_10(6), 0.5);
+  ASSERT_EPS(itemp_to_celsius(7) * 10.0, itemp_to_celsius_10(7), 0.5);
+  ASSERT_EPS(itemp_to_celsius(8) * 10.0, itemp_to_celsius_10(8), 0.5);
+  ASSERT_EPS(itemp_to_celsius(9) * 10.0, itemp_to_celsius_10(9), 0.5);
+
+  ASSERT_EPS(itemp_to_celsius(0) * 100.0, itemp_to_celsius_100(0), 0.5);
+  ASSERT_EPS(itemp_to_celsius(1) * 100.0, itemp_to_celsius_100(1), 0.5);
+  ASSERT_EPS(itemp_to_celsius(2) * 100.0, itemp_to_celsius_100(2), 0.5);
+  ASSERT_EPS(itemp_to_celsius(3) * 100.0, itemp_to_celsius_100(3), 0.5);
+  ASSERT_EPS(itemp_to_celsius(4) * 100.0, itemp_to_celsius_100(4), 0.5);
+  ASSERT_EPS(itemp_to_celsius(5) * 100.0, itemp_to_celsius_100(5), 0.5);
+  ASSERT_EPS(itemp_to_celsius(6) * 100.0, itemp_to_celsius_100(6), 0.5);
+  ASSERT_EPS(itemp_to_celsius(7) * 100.0, itemp_to_celsius_100(7), 0.5);
+  ASSERT_EPS(itemp_to_celsius(8) * 100.0, itemp_to_celsius_100(8), 0.5);
+  ASSERT_EPS(itemp_to_celsius(9) * 100.0, itemp_to_celsius_100(9), 0.5);
 
   printf("\r\n...unit tests complete.\r\n");
 }
